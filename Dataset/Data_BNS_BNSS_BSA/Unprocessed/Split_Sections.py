@@ -1,180 +1,147 @@
 import json
-import os
 import re
-from transformers import AutoTokenizer
+import sys
 
-# ================== CONFIG ====================
-
-# Base directory where files are located
-base_path = r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA"
-
-# Mapping of input JSON files to their corresponding output JSON files
-input_output_files = {
-    r"Unprocessed\BNS_sections.json": r"Statutes\BNS_sections.json",
-    r"Unprocessed\BNSS_sections.json": r"Statutes\BNSS_sections.json",
-    r"Unprocessed\BSA_sections.json": r"Statutes\BSA_sections.json"
-}
-
-# Model configuration
-model_name = "law-ai/InLegalBERT"
-max_tokens = 510  # Safe limit for tokenization
-
-# ==============================================
-
-# Load tokenizer
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-
-def split_into_sentences(text):
+def split_content_into_subsections(content):
     """
-    Splits the input text into sentences based on common sentence-ending punctuation.
-
-    Args:
-        text (str): The input text to split.
-
-    Returns:
-        list: A list of sentences.
+    Splits the content into parts based on numeric markers.
+    Assumes that a valid subsection starts with a numeric marker like (1), (2), etc.
     """
-    sentence_endings = re.compile(r'(?<=[.!?])\s+')
-    sentences = sentence_endings.split(text.strip())
-    return [s for s in sentences if s]
+    content = content.strip()
+    # Use regex lookahead to split at every occurrence of a numeric marker.
+    parts = re.split(r'(?=\(\d+\))', content)
+    # Remove empty parts and strip whitespace.
+    parts = [p.strip() for p in parts if p.strip()]
+    return parts
 
-
-def split_long_sentence(sentence, max_tokens=510):
+def process_sections(input_json):
     """
-    Splits a long sentence into smaller parts without exceeding the max_tokens limit.
+    Processes a list of section entries.
 
-    Args:
-        sentence (str): The sentence to split.
-        max_tokens (int): The maximum number of tokens allowed per chunk.
+    For each section, if the content (or section_text) contains numeric subsection markers,
+    it splits the text into parts. If the very first part does not start with a marker and
+    there is at least one marker later on, that first part is treated as a preamble.
+    
+    Then for the remaining parts, it creates a JSON object for each subsection. If a non‑consecutive
+    marker is encountered, its text (with its marker) is appended to the previous subsection.
 
-    Returns:
-        list: A list of smaller sentence chunks.
+    If no numeric marker is detected at all, the section is output as is.
+    
+    Each new object includes:
+      - section_number
+      - statute
+      - For sections with subsections: subsection_number and subsection_text.
+      - For sections without markers: section_text.
     """
-    max_content_tokens = max_tokens - 2  # Reserve space for [CLS] and [SEP]
-    words = sentence.split()
-    sub_chunks = []
-    current_chunk = ""
-    current_length = 0
-
-    for word in words:
-        word_length = len(tokenizer.encode(word, add_special_tokens=False))
-
-        if current_length + word_length > max_content_tokens:
-            if current_chunk:
-                sub_chunks.append(current_chunk.strip())
-            current_chunk = word
-            current_length = word_length
-        else:
-            current_chunk += " " + word
-            current_length += word_length
-
-    if current_chunk:
-        sub_chunks.append(current_chunk.strip())
-
-    return sub_chunks
-
-
-def sentence_aware_split(content, max_tokens=510):
-    """
-    Splits content into chunks while preserving sentence boundaries and adhering to the max_tokens limit.
-
-    Args:
-        content (str): The content to split.
-        max_tokens (int): The maximum number of tokens allowed per chunk.
-
-    Returns:
-        list: A list of content chunks.
-    """
-    sentences = split_into_sentences(content)
-    chunks = []
-    current_chunk = ""
-
-    for sentence in sentences:
-        sentence_tokens = len(tokenizer.encode(sentence, add_special_tokens=False))
-
-        # If sentence itself is too long, split it
-        if sentence_tokens > max_tokens:
-            if current_chunk:
-                chunks.append(current_chunk.strip())
-                current_chunk = ""
-            long_chunks = split_long_sentence(sentence, max_tokens)
-            chunks.extend(long_chunks)
+    output_objects = []
+    
+    for entry in input_json:
+        section_number = entry.get("section_number")
+        statute = entry.get("statute")
+        # Try to get text from "content" first; if not, then "section_text"
+        content = entry.get("content") or entry.get("section_text", "")
+        content = content.strip()
+        
+        if not content:
             continue
-
-        # Check if adding sentence exceeds max_tokens
-        temp_chunk = (current_chunk + " " + sentence).strip()
-        temp_tokens = len(tokenizer.encode(temp_chunk, add_special_tokens=False))
-
-        if temp_tokens > max_tokens:
-            if current_chunk:
-                chunks.append(current_chunk.strip())
-            current_chunk = sentence  # Start a new chunk
-        else:
-            current_chunk = temp_chunk
-
-    if current_chunk:
-        chunks.append(current_chunk.strip())
-
-    return chunks
-
-
-def process_and_chunk_file(input_file_path, output_file_path):
-    """
-    Processes a JSON file containing sections, splits the content into chunks, and saves the result.
-
-    Args:
-        input_file_path (str): Path to the input JSON file.
-        output_file_path (str): Path to the output JSON file.
-
-    Returns:
-        None
-    """
-    with open(input_file_path, 'r', encoding='utf-8') as f:
-        sections = json.load(f)
-
-    all_chunks = []
-    for section in sections:
-        section_number = section['section_number']
-        content = section['content']
-        statute = section['statute']
-
-        chunks = sentence_aware_split(content, max_tokens=max_tokens)
-
-        for idx, chunk in enumerate(chunks, start=1):
-            all_chunks.append({
+        
+        parts = split_content_into_subsections(content)
+        
+        # If no part starts with a marker at all, output the section as is.
+        if not any(re.match(r'^\(\d+\)', part) for part in parts):
+            output_objects.append({
                 "section_number": section_number,
-                "chunk_number": idx,
-                "content": chunk,
-                "statute": statute
+                "statute": statute,
+                "section_text": content
             })
+            continue
+        
+        # If the first part doesn't start with a marker and there is more than one part,
+        # treat it as a preamble and remove it from the parts.
+        if len(parts) > 1 and not re.match(r'^\(\d+\)', parts[0]):
+            preamble = parts.pop(0)
+            # Optionally, you can store the preamble in an output object.
+            output_objects.append({
+                "section_number": section_number,
+                "statute": statute,
+                "preamble": preamble
+            })
+        
+        expected_number = 1
+        current_obj = None
+        
+        for part in parts:
+            # Attempt to extract the numeric marker and the text that follows.
+            marker_match = re.match(r'(\(\d+\))\s*(.*)', part, re.DOTALL)
+            if marker_match:
+                marker = marker_match.group(1)
+                text = marker_match.group(2).strip()
+                try:
+                    current_number = int(marker.strip("()"))
+                except Exception as e:
+                    print(f"Warning: Could not parse marker {marker} in section {section_number}. Skipping this part.")
+                    continue
 
-    # Save final chunked file
-    with open(output_file_path, 'w', encoding='utf-8') as f:
-        json.dump(all_chunks, f, ensure_ascii=False, indent=2)
+                if current_number == expected_number:
+                    # Create a new JSON object for a new subsection.
+                    current_obj = {
+                        "section_number": section_number,
+                        "statute": statute,
+                        "subsection_number": marker,
+                        "subsection_text": text
+                    }
+                    output_objects.append(current_obj)
+                    expected_number += 1
+                else:
+                    # Non-consecutive marker: append its marker and text to the previous subsection.
+                    if current_obj:
+                        append_text = f" {marker} {text}"
+                        current_obj["subsection_text"] += append_text
+                    else:
+                        # If no previous subsection exists, create one.
+                        current_obj = {
+                            "section_number": section_number,
+                            "statute": statute,
+                            "subsection_number": marker,
+                            "subsection_text": text
+                        }
+                        output_objects.append(current_obj)
+                        expected_number = current_number + 1
+            else:
+                # No valid marker found; append the text to the previous subsection.
+                if current_obj:
+                    current_obj["subsection_text"] += " " + part
+                else:
+                    print(f"Warning: No valid marker found in a part in section {section_number}. Skipping.")
+                    continue
 
-    # Token stats for debug
-    max_len = max(len(tokenizer.encode(c['content'], add_special_tokens=False)) for c in all_chunks)
-    min_len = min(len(tokenizer.encode(c['content'], add_special_tokens=False)) for c in all_chunks)
-    avg_len = sum(len(tokenizer.encode(c['content'], add_special_tokens=False)) for c in all_chunks) / len(all_chunks)
-    over_limit = sum(1 for c in all_chunks if len(tokenizer.encode(c['content'], add_special_tokens=False)) > max_tokens)
+    return output_objects
 
-    print(f"Processed '{os.path.basename(input_file_path)}' — {len(sections)} sections split into {len(all_chunks)} chunks.")
-    print(f"Stats — Max tokens: {max_len}, Min tokens: {min_len}, Avg tokens: {round(avg_len, 2)}, Over limit: {over_limit}/{len(all_chunks)}")
-    print(f"Output saved to '{output_file_path}'\n")
+def main():
+    
+    
+    input_output = {
+        r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNS_sections.json" : r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BNS_cases.json",
+        r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNSS_sections.json" : r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BNSS_cases.json",
+        r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BSA_sections.json" : r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BSA_cases.json"
+    }
 
-
-# ==================== Main Runner ====================
+    for input_filename, output_filename in input_output.items():
+        try:
+            with open(input_filename, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception as e:
+            sys.exit(f"Error reading {input_filename}: {e}")
+    
+        if not isinstance(data, list):
+            sys.exit("Input JSON must be a list of section entries.")
+    
+        output_data = process_sections(data)
+    
+        with open(output_filename, "w", encoding="utf-8") as f:
+            json.dump(output_data, f, indent=2, ensure_ascii=False)
+    
+        print(f"Extracted {len(output_data)} objects. Output written to {output_filename}")
 
 if __name__ == "__main__":
-    """
-    Main entry point of the script. Processes all input files defined in the configuration
-    and splits their content into chunks.
-    """
-    for input_filename, output_filename in input_output_files.items():
-        input_path = os.path.join(base_path, input_filename)
-        output_path = os.path.join(base_path, output_filename)
-
-        process_and_chunk_file(input_path, output_path)
-
-    print("✅ All files processed and chunked safely.")
+    main()
