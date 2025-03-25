@@ -121,9 +121,9 @@ def main():
     
     
     input_output = {
-        r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNS_sections.json" : r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BNS_cases.json",
-        r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNSS_sections.json" : r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BNSS_cases.json",
-        r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BSA_sections.json" : r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BSA_cases.json"
+        r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNS_sections.json" : r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Statutes\BNS_sections.json",
+        r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNSS_sections.json" : r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Statutes\BNSS_sections.json",
+        r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BSA_sections.json" : r"D:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Statutes\BSA_sections.json"
     }
 
     for input_filename, output_filename in input_output.items():
