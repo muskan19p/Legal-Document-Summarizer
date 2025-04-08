@@ -1,0 +1,140 @@
+<html>
+    <head>
+        <title>Legal-Document Summarizer</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="D:\DELL\Documents\GitHub\Legal-Document-Summarizer\User\style.css">
+    </head>
+    <body>
+     <div class="header"></div>
+
+    <div style="position: absolute; top: 20px; left: 554px; padding: 10px; display: inline-flex; align-items: center; gap: 10px;">
+        <div class="heading">Legal Document Summarizer</div>
+    </div>
+
+    <div class="card" style="position: absolute; top: 116px; left: 443px; width: 600px;">
+        <div style="align-self: stretch; height: 63px; padding: 20px 24px; border-bottom: 1px solid #E3E3E3; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; align-items: center;">
+            <div class="subheading">File Upload</div>
+        </div>
+        <div style="padding: 4px 24px; display: flex; flex-direction: column; gap: 8px; align-self: stretch;">
+            <div class="drop-area">
+                <div style="width: 24px; height: 24px; position: relative;">
+                    <div style="position: absolute; width: 20.2px; height: 13.05px; top: 4.95px; left: 2.3px; outline: 2px #484848 solid;"></div>
+                    <div style="position: absolute; width: 6px; height: 3px; top: 12px; left: 9px; outline: 2px #484848 solid;"></div>
+                </div>
+                <div class="text-regular">Click or drag file to this area to upload</div>
+            </div>
+            <div class="text-muted">Formats accepted are .pdf, .txt and .docx</div>
+        </div>
+        <div style="height: 72px; padding: 14px 24px; border-top: 1px solid #E3E3E3; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; display: flex; justify-content: flex-end; gap: 16px; align-self: stretch;">
+            <div class="btn-cancel">
+                <div class="button-cancel">Cancel</div>
+            </div>
+            <div class="btn-summarize">
+                <div class="button-submit">Summarize</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="position: absolute; top: 542px; left: 443px; width: 600px; display: inline-flex; flex-direction: column; gap: 4px;">
+        <div style="padding: 10px; display: inline-flex; align-items: center;">
+            <div class="summary-label">Summary: </div>
+        </div>
+        <div class="summary-box"></div>
+    </div>
+
+   <div style="position: absolute; top: 922px; left: 268px; padding: 12px; background: white; box-shadow: 0px 98px 66px rgba(18.53, 17.57, 65.87, 0.02); border-radius: 34px; display: inline-flex; flex-direction: column; gap: 12px;">
+    <!-- Profile Section (Top) -->
+    <div style="display: flex; flex-direction: row; gap: 24px;">
+        <div class="form-row">
+            <label class="name-label">Name</label>
+            <div class="input-box">
+                <span class="username">John Carter</span>
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="email-label">Email</label>
+            <div class="input-box">
+                <span class="email-muted">Email address</span>
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="phone-label">Phone Number</label>
+            <div class="input-box">
+                <span class="email-muted">(123) 456-7890</span>
+            </div>
+        </div>
+    
+<!-- ⭐ Rating -->
+      <div>
+        <div><strong>Rate Summary</strong></div>
+        <div class="stars">
+          <div class="star"></div>
+          <div class="star"></div>
+          <div class="star"></div>
+          <div class="star inactive"></div>
+          <div class="star inactive"></div>
+        </div>
+      </div>
+    </div>
+
+<!-- Feedback Section (Bottom) -->
+    
+    
+    <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+
+    <div class="feedback-section">
+      <div><strong>Additional Feedback</strong></div>
+      <div class="feedback-box">
+        If you have any additional feedback, please type it in here...
+      </div>
+      <div class="btn-submit-feedback">Submit Feedback</div>
+    </div>
+</div>
+</div>
+</div>    
+
+</body>
+
+
+
+<script>
+    // Handle file drop / click
+  const dropArea = document.querySelector('.drop-area');
+  dropArea.addEventListener('click', () => {
+    alert('Trigger file input here.')
+    // Implement actual file input if needed
+  });
+
+  // Summarize Button
+  document.querySelector('.btn-summarize')?.addEventListener('click', () => {
+    alert('Summarizing document...')
+    // Add logic to send file for summarization
+    document.querySelector('.summary-box').innerText = "This is a sample summary of the uploaded document.";
+  });
+
+  // Cancel Button
+  document.querySelector('.btn-cancel')?.addEventListener('click', () => {
+    alert('Action cancelled.');
+    document.querySelector('.summary-box').innerText = "";
+  });
+
+  // Star rating functionality
+  const stars = document.querySelectorAll('.stars .star');
+  stars.forEach((star, index) => {
+    star.addEventListener('click', () => {
+      stars.forEach((s, i) => {
+        s.classList.toggle('inactive', i > index);
+      });
+    });
+  });
+
+  // Submit feedback button
+  document.querySelector('.btn-submit-feedback')?.addEventListener('click', () => {
+    const feedback = document.querySelector('.feedback-box')?.innerText;
+    alert('Feedback submitted: ' + feedback);
+    // You could send it to a server here
+  });
+
+</script>
+
+</html>
