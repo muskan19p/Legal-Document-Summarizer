@@ -7,19 +7,19 @@ import fitz  # PyMuPDF
 patterns = {
     "BNS": re.compile(
         r'[\(\[]?(?:Offence\s+under\s+section\s+(\d+)\s+|as\s+per\s+provisions\s+in\s+)?'
-        r'((?:BNS)|(?:B\.N\.S\.)|(?:bhartiya nyaya sanhita)|(?:Bhartiya Nyaya Sanhita)|(?:BHARTIYA NYAYA SANHITA))'
+        r'((?:BNS)|(?:B\.N\.S\.)|(?:Bhartiya Nyaya Sanhita)|(?:Bharatiya Nyaya Sanhita)|(?:BHARTIYA NYAYA SANHITA)|(?:BHARATIYA NYAYA SANHITA))'
         r'[\)\]]?',
         0  # case sensitive
     ),
     "BNSS": re.compile(
         r'[\(\[]?(?:Offence\s+under\s+section\s+(\d+)\s+|as\s+per\s+provisions\s+in\s+)?'
-        r'((?:BNSS)|(?:B\.N\.S\.S\.)|(?:bhariya nagrik suraksha sanhita)|(?:Bhariya Nagrik Suraksha Sanhita)|(?:BHARIYA NAGRIK SURAKSHA SANHITA))'
+        r'((?:BNSS)|(?:B\.N\.S\.S\.)|(?:Bhartiya Nagrik Suraksha Sanhita)|(?:Bharatiya Nagrik Suraksha Sanhita)|(?:BHARTIYA NAGRIK SURAKSHA SANHITA)|(?:BHARATIYA NAGRIK SURAKSHA SANHITA))'
         r'[\)\]]?',
         0
     ),
     "BSA": re.compile(
         r'[\(\[]?(?:Offence\s+under\s+section\s+(\d+)\s+|as\s+per\s+provisions\s+in\s+)?'
-        r'((?:BSA)|(?:B\.S\.A\.)|(?:bhartiya shakshya adhiniyam)|(?:Bhartiya Shakshya Adhiniyam)|(?:BHARTIYA SHAKSHYA ADHINIYAM))'
+        r'((?:BSA)|(?:B\.S\.A\.)|(?:Bhartiya Sakshya Adhiniyam)|(?:Bharatiya Sakshya Adhiniyam)|(?:BHARTIYA SAKSHYA ADHINIYAM)|(?:BHARATIYA SAKSHYA ADHINIYAM))'
         r'[\)\]]?',
         0
     )
@@ -133,6 +133,35 @@ def find_statute_mentions(text):
                 })
     return mentions
 
+def extract_case_title_from_pdf(pdf_path, filename):
+    """
+    Extract the case title from the beginning of the PDF document.
+    It reads the first few pages, then extracts text until a date is encountered.
+    If a match is found, returns that text; otherwise, falls back to the given filename.
+    """
+    try:
+        doc = fitz.open(pdf_path)
+        text = ""
+        # Read the first 3 pages (adjust as needed)
+        for page_num in range(min(3, len(doc))):
+            page = doc.load_page(page_num)
+            text += page.get_text() + " "
+        doc.close()
+        text = ' '.join(text.split())
+        # Regex pattern: capture text from the start until a date is found.
+        title_pattern = re.compile(
+            r'^(.*?)(?=\b\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b)',
+            re.IGNORECASE
+        )
+        match = title_pattern.search(text)
+        if match:
+            return match.group(1).strip()
+        else:
+            return filename
+    except Exception as e:
+        print(f"Error processing {pdf_path}: {e}")
+        return filename
+
 def process_pdfs(directory):
     """Process PDF files in the directory and extract case objects if a target statute is mentioned."""
     cases = []
@@ -147,13 +176,19 @@ def process_pdfs(directory):
                 statute_mentions = find_statute_mentions(text)
                 if statute_mentions:
                     case_id = extract_case_id(text, os.path.splitext(file)[0])
-                    # Derive case title from filename: remove extension, remove trailing "_BNS", and remove anything starting with "_on".
+                    # First, derive a title from the file name by removing the extension.
                     filename = os.path.splitext(file)[0]
+                    # Remove any trailing suffix starting with "_on"
                     filename = re.sub(r'_on.*$', '', filename)
+                    # Remove any trailing "_BNS"
                     filename = filename.replace("_BNS", "").strip()
+                    # Optionally, compare with content-based extraction:
+                    content_title = extract_case_title_from_pdf(pdf_path, filename)
+                    # Choose the longer title (assuming it's more complete)
+                    case_title = content_title if len(content_title) > len(filename) else filename
                     case_obj = {
                         "case_id": case_id,
-                        "case_title": filename,
+                        "case_title": case_title,
                         "judgment_date": metadata.get("judgment_date", ""),
                         "statute_mentions": statute_mentions
                     }
@@ -161,11 +196,10 @@ def process_pdfs(directory):
     return cases
 
 if __name__ == "__main__":
-    
     input_output = {
-        r"Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNS" : r"Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BNS_cases.json",
-        r"Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNSS" : r"Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BNSS_cases.json",
-        r"Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BSA" : r"Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BSA_cases.json"
+        r"d:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNS" : r"d:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BNS_cases.json",
+        r"d:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BNSS" : r"d:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BNSS_cases.json",
+        r"d:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Unprocessed\BSA" : r"d:\Legal-Document-Summarizer\Dataset\Data_BNS_BNSS_BSA\Case_Files\BSA_cases.json"
     }
 
     for input_directory, output_json in input_output.items():
