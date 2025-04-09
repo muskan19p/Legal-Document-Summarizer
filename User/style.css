@@ -1,0 +1,242 @@
+.heading {
+    color: #333333;
+    font-size: 24px;
+    font-family: Roboto, sans-serif;
+    font-weight: 600;
+    word-wrap: break-word;
+}
+
+.subheading {
+    color: #333333;
+    font-size: 20px;
+    font-family: Roboto, sans-serif;
+    font-weight: 600;
+    word-wrap: break-word;
+}
+
+.text-regular {
+    color: #484848;
+    font-size: 16px;
+    font-family: Roboto, sans-serif;
+    font-weight: 400;
+    word-wrap: break-word;
+}
+
+.text-muted {
+    color: #9D9D9D;
+    font-size: 16px;
+    font-family: Roboto, sans-serif;
+    font-weight: 400;
+    word-wrap: break-word;
+}
+
+.button-cancel {
+    color: #232222;
+    font-size: 16px;
+    font-family: Roboto, sans-serif;
+    font-weight: 400;
+    word-wrap: break-word;
+}
+
+.button-submit {
+    color: white;
+    font-size: 16px;
+    font-family: Roboto, sans-serif;
+    font-weight: 400;
+    word-wrap: break-word;
+}
+
+.summary-label {
+    color: #333333;
+    font-size: 18px;
+    font-family: Roboto, sans-serif;
+    font-weight: 700;
+    line-height: 20px;
+    word-wrap: break-word;
+}
+
+/* User info */
+.username {
+    color: #4A90E2;
+    font-size: 18px;
+    font-family: "DM Sans", sans-serif;
+    font-weight: 500;
+    line-height: 20px;
+    word-wrap: break-word;
+}
+
+.email-label,
+.name-label,
+.phone-label,
+.rate-label,
+.feedback-label {
+    color: #333333;
+    font-size: 18px;
+    font-family: Roboto, sans-serif;
+    font-weight: 700;
+    line-height: 20px;
+    word-wrap: break-word;
+}
+
+.email-muted,
+.phone-muted,
+.feedback-placeholder {
+    color: #6F6C90;
+    font-size: 18px;
+    font-family: Roboto, sans-serif;
+    font-weight: 700;
+    line-height: 20px;
+    word-wrap: break-word;
+}
+
+/* Buttons */
+.btn-cancel {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #CBCBCB;
+    padding: 14px 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-summarize {
+    background: #4A90E2;
+    border-radius: 8px;
+    padding: 14px 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.btn-submit-feedback {
+    background: #4A90E2;
+    padding: 28px 50px;
+    border-radius: 86px;
+    box-shadow: 0px 8px 22px rgba(74, 58, 255, 0.26);
+    color: white;
+    font-size: 18px;
+    font-family: Roboto, sans-serif;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+}
+
+/* Summary area */
+.summary-box {
+    border: 1px solid #CCCCCC;
+    height: 300px;
+}
+
+/* Feedback box */
+.feedback-box {
+    background: white;
+    box-shadow: 0px 2px 6px rgba(18.53, 17.57, 65.87, 0.07);
+    border-radius: 20px;
+    border: 1px solid #EFF0F6;
+    padding: 12px 8px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+/* Card style */
+.card {
+    background: white;
+    border-radius: 8px;
+    border: 2px solid #AAAAAA;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Header */
+.header {
+    width: 1440px;
+    height: 80px;
+    background: #F7F7F7;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+/* Drag and drop area */
+.drop-area {
+    border: 1px solid #D5D5D5;
+    border-radius: 8px;
+    padding: 48px 106px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 17px;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 200px;
+}
+
+.input-box {
+    padding: 12px 16px;
+    background-color: #fff;
+    border-radius: 12px;
+    border: 1px solid #EFF0F6;
+    box-shadow: 0px 2px 6px rgba(19, 18, 66, 0.07);
+}
+
+.stars {
+    display: flex;
+    gap: 8px;
+}
+
+.star {
+    width: 35.75px;
+    height: 34.08px;
+    background: #FFD029;
+    outline: 2.96px white solid;
+    border-radius: 4px;
+}
+
+.star.inactive {
+    background: #EFF0F6;
+}
+
+.username,
+.email-muted {
+    font-size: 14px;
+    color: #4a4a4a;
+}
+.phone-muted {
+    font-size: 14px;
+    color: #9D9D9D;
+}
+
+
+.feedback-section {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+}
+
+
+
+.feedback-placeholder {
+    color: #888;
+    font-size: 14px;
+}
+
+.btn-submit-feedback {
+    background-color: #4A90E2;
+    color: white;
+    padding: 12px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.1s ease;
+}
+
+.btn-submit-feedback:hover {
+    background-color: #3a78c2;
+}
+
