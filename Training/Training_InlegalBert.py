@@ -68,10 +68,36 @@ def load_case_law_data(filenames):
 rouge = evaluate.load("rouge")
 def compute_rouge(eval_pred):
     predictions, labels = eval_pred
+
+    # Handle tuple output from model (e.g., (logits,))
+    if isinstance(predictions, tuple):
+        predictions = predictions[0]
+
+    # If predictions are logits (floats), we need to argmax to get token ids
+    if isinstance(predictions, np.ndarray) and predictions.ndim == 3:
+        predictions = np.argmax(predictions, axis=-1)
+
+    # Ensure both are lists of token ids
+    predictions = predictions.tolist() if isinstance(predictions, np.ndarray) else predictions
+    labels = labels.tolist() if isinstance(labels, np.ndarray) else labels
+
+    labels = [
+    [(token if token >= 0 else tokenizer.pad_token_id) for token in label]
+    for label in labels
+    ]
+
+
     decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
     decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
-    scores = rouge.compute(predictions=decoded_preds, references=decoded_labels, use_stemmer=True)
-    return {"rougeL": scores["rougeL"].mid.fmeasure}
+
+    decoded_preds = [pred.strip() for pred in decoded_preds]
+    decoded_labels = [label.strip() for label in decoded_labels]
+
+    rouge_scores = rouge.compute(predictions=decoded_preds, references=decoded_labels, use_stemmer=True)
+
+    return {
+        key: round(value * 100, 4) for key, value in rouge_scores.items()
+    }
 
 def compute_accuracy(eval_pred):
     logits, labels = eval_pred
