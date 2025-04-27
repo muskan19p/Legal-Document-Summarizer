@@ -1,0 +1,4 @@
+# Ignore model checkpoints and training outputs
+mlm/checkpoint-*/
+mlm/*.safetensors
+mlm/*.bin
