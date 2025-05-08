@@ -4,15 +4,18 @@ import torch
 import torch.nn.functional as F
 from wtpsplit import SaT
 from huggingface_hub import login
-from transformers import DPRQuestionEncoder, DPRContextEncoder
+from transformers import DPRQuestionEncoder, DPRContextEncoder, AutoTokenizer
 
 
 #hugging face-cli login --token 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
 # Load BhLegalBERT dual encoders (DPR style)
 
 login(token="")
-query_encoder = DPRQuestionEncoder.from_pretrained("RvShivam/BhLegalBERT", subfolder="retrieval")
 
+query_tokenizer   = AutoTokenizer.from_pretrained("RvShivam/BhLegalBERT", subfolder="retrieval" )
+context_tokenizer = AutoTokenizer.from_pretrained("RvShivam/BhLegalBERT", subfolder="retrieval")
+
+query_encoder   = DPRQuestionEncoder.from_pretrained("RvShivam/BhLegalBERT", subfolder="retrieval")
 context_encoder = DPRContextEncoder.from_pretrained("RvShivam/BhLegalBERT", subfolder="retrieval")
 
 def split_sentences(text: str) -> list[str]:
@@ -22,12 +25,11 @@ def split_sentences(text: str) -> list[str]:
     sat = SaT("sat-3l")  
     return sat.split(text)
 
-
 def encode_query(query: str, device: str = "cpu") -> torch.Tensor:
     """
     Encode the query string into a dense vector.
     """
-    inputs = query_encoder.tokenizer([query], return_tensors="pt")
+    inputs = query_tokenizer([query], return_tensors="pt")
     outputs = query_encoder(**{k: v.to(device) for k, v in inputs.items()})
     # Return single vector of shape (hidden_size,)
     return outputs.pooler_output[0]
@@ -37,7 +39,7 @@ def encode_sentences(sentences: list[str], device: str = "cpu") -> torch.Tensor:
     Encode a list of sentences into dense vectors.
     Returns a tensor of shape (num_sentences, hidden_size).
     """
-    inputs = context_encoder.tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")
+    inputs = context_tokenizer(sentences, padding=True, truncation=True, return_tensors="pt")
     outputs = context_encoder(**{k: v.to(device) for k, v in inputs.items()})
     return outputs.pooler_output  # shape: (n, hidden_size)
 
@@ -103,8 +105,8 @@ def select_sentences(chunk: str, device: str = "cpu", top_k: int = 10, top_m: in
         return []
 
     # Encode
-    sent_embs = encode_sentences(sentences, device).cpu().numpy()
-    query_emb = encode_query("Summarize key legal points", device).cpu().numpy()
+    sent_embs = encode_sentences(sentences, device).detach().cpu().numpy()
+    query_emb = encode_query("Summarize key legal points", device).detach().cpu().numpy()
 
     # Coarse ranking
     top_m_idxs = coarse_ranking(torch.tensor(query_emb), torch.tensor(sent_embs), top_m)
