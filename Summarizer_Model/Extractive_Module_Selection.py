@@ -10,7 +10,7 @@ from transformers import DPRQuestionEncoder, DPRContextEncoder
 #hugging face-cli login --token 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
 # Load BhLegalBERT dual encoders (DPR style)
 
-login(token="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")
+login(token="")
 query_encoder = DPRQuestionEncoder.from_pretrained("RvShivam/BhLegalBERT", subfolder="retrieval")
 
 context_encoder = DPRContextEncoder.from_pretrained("RvShivam/BhLegalBERT", subfolder="retrieval")
